@@ -1,19 +1,20 @@
 package rw.bnr.user_service.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Response;
 import org.apache.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import rw.bnr.user_service.dto.CredentialDto;
-import rw.bnr.user_service.dto.ErrorResponse;
-import rw.bnr.user_service.dto.JwtToken;
-import rw.bnr.user_service.dto.UserDto;
+import rw.bnr.user_service.dto.*;
 import rw.bnr.user_service.service.UserService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -51,18 +52,57 @@ public class UserController
     @GetMapping
     public ResponseEntity<?> getAllUsers()
     {
-        // TODO: Retrieve all existing users and return them
-        return ResponseEntity.ok().body(new UserDto());
+        log.info("Retrieving all users.");
+        List<UserDto> users = userService.getAllUsers();
+
+        if (users.isEmpty())
+        {
+            log.info("No users found.");
+            return ResponseEntity.noContent().build();
+        }
+
+        log.info("Retrieved {} users.", users.size());
+        return ResponseEntity.ok().body(users);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getUser(@NotNull(message = "id cannot be null.")
                                      @Positive(message = "id cannot be negative")
-                                     @PathVariable long id,
-                                     @RequestParam(required = false) String userId)
+                                     @Valid @PathVariable long id)
     {
-        // TODO: Retrieve a particular user
-        return ResponseEntity.ok().body(new UserDto());
+        log.info("Retrieving user with id {}.", id);
+        UserDto user = userService.getUserById(id);
+
+        if (user == null)
+        {
+            log.info("User with id {} not found.", id);
+            return ResponseEntity
+                    .status(HttpStatus.SC_NOT_FOUND)
+                    .body(new ErrorResponse("User with id " + id + " not found."));
+        }
+
+        log.info("Retrieved {} user.", user);
+        return ResponseEntity.ok().body(user);
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getUser(@NotBlank(message = "username cannot be blank.")
+                                    @RequestParam
+                                    @Valid String username)
+    {
+        log.info("Retrieving user with username {}.", username);
+        UserDto user = userService.getUserByUsername(username);
+
+        if (user == null)
+        {
+            log.info("User with username {} not found.", username);
+            return ResponseEntity
+                    .status(HttpStatus.SC_NOT_FOUND)
+                    .body(new ErrorResponse("User with username " + username + " not found."));
+        }
+
+        log.info("Retrieved {} with username {}.", user, username);
+        return ResponseEntity.ok().body(user);
     }
 
     @PostMapping("/login")
@@ -84,11 +124,23 @@ public class UserController
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateUser(@RequestBody UserDto userDto, @NotNull(message = "id cannot be null.")
-                                        @PathVariable long id)
+    public ResponseEntity<?> updateUser(@Valid @RequestBody UpdateUsernameDto userDto,
+                                        @NotNull(message = "id cannot be null.")
+                                        @Valid @PathVariable long id)
     {
-        // TODO: Simply update the user's username.
-        return ResponseEntity.ok().body(userDto);
+        log.info("Updating username for user with id {}.", id);
+        UserDto user = userService.updateUsername(userDto, id);
+
+        if (user == null)
+        {
+            log.info("Could not update username. User with id {} not found.", id);
+            return ResponseEntity
+                    .status(HttpStatus.SC_NOT_FOUND)
+                    .body(new ErrorResponse("Could not update username. User with id " + id + " not found."));
+        }
+
+        log.info("Updating username for user with id {} successfully.", id);
+        return ResponseEntity.ok().body(user);
     }
 
     @DeleteMapping("/{id}")
@@ -96,7 +148,20 @@ public class UserController
                                             @Positive(message = "id cannot be negative")
                                             @PathVariable long id)
     {
-        // TODO: Perform a soft delete of the user
-        return ResponseEntity.ok().body(new UserDto());
+        log.info("Deleting user with id {}.", id);
+        boolean isDeleted = userService.deleteUser(id);
+
+        if (isDeleted)
+        {
+            log.info("User with id {} deleted.", id);
+            return ResponseEntity
+                    .status(HttpStatus.SC_OK)
+                    .body("User deleted successfully.");
+        }
+
+        log.info("Delete failed. User with id {} not found.", id);
+        return ResponseEntity
+                .status(HttpStatus.SC_NOT_FOUND)
+                .body(new ErrorResponse("Delete failed. User with id " + id + " not found."));
     }
 }
