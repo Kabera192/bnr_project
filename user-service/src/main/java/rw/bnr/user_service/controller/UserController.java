@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
 import org.apache.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -49,7 +48,7 @@ public class UserController
         ).body(savedUser);
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<?> getAllUsers()
     {
         log.info("Retrieving all users.");
@@ -87,8 +86,7 @@ public class UserController
 
     @GetMapping
     public ResponseEntity<?> getUser(@NotBlank(message = "username cannot be blank.")
-                                    @RequestParam
-                                    @Valid String username)
+                                     @Valid @RequestParam String username)
     {
         log.info("Retrieving user with username {}.", username);
         UserDto user = userService.getUserByUsername(username);

@@ -9,10 +9,13 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import rw.bnr.user_service.filter.InternalAuthFilter;
 
 @Configuration
 @RequiredArgsConstructor
@@ -24,9 +27,13 @@ public class SecurityConfig
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
     {
         http.csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/user/login", "/user/register").permitAll());
+                                .requestMatchers("/user/login", "/user/register").permitAll()
+                                .anyRequest().authenticated())
+                .addFilterBefore(interFilterAuth(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -50,5 +57,11 @@ public class SecurityConfig
     public PasswordEncoder passwordEncoder()
     {
         return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    public InternalAuthFilter interFilterAuth()
+    {
+        return new InternalAuthFilter();
     }
 }

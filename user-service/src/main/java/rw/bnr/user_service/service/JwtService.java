@@ -3,6 +3,7 @@ package rw.bnr.user_service.service;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.KeyGenerator;
@@ -17,21 +18,22 @@ import java.util.Map;
 @Slf4j
 public class JwtService
 {
-    private String secret = "";
+    private final String secret;
 
-    public JwtService()
+    public JwtService(@Value("${jwt.secret}") String mySecret)
     {
-        log.info("JwtService constructor creating secret key generator.");
-        try
-        {
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey secretKey = keyGenerator.generateKey();
-            secret = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-        }
-        catch(Exception e)
-        {
-            log.error(e.getMessage());
-        }
+//        log.info("JwtService constructor creating secret key generator.");
+//        try
+//        {
+//            KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
+//            SecretKey secretKey = keyGenerator.generateKey();
+//            secret = Base64.getEncoder().encodeToString(secretKey.getEncoded());
+//        }
+//        catch(Exception e)
+//        {
+//            log.error(e.getMessage());
+//        }
+        secret = mySecret;
     }
 
     public String generateToken(String email)
@@ -44,7 +46,7 @@ public class JwtService
                 .add(claims)
                 .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 30))
+                .expiration(new Date(System.currentTimeMillis() + 360000000))
                 .and()
                 .signWith(getKey())
                 .compact();
@@ -54,7 +56,7 @@ public class JwtService
     public Key getKey()
     {
         log.info("getKey called");
-        byte[] keyBytes = Base64.getDecoder().decode(secret);
+        byte[] keyBytes = secret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }
