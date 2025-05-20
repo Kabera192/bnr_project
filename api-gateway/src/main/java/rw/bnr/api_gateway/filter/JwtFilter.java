@@ -33,7 +33,8 @@ public class JwtFilter extends OncePerRequestFilter
     private final JwtProperties jwtProperties;
     private final List<String> publicPaths = Arrays.asList(
             "/user/register",
-            "/user/login"
+            "/user/login",
+            "/swagger-ui"
     );
 
     @Override

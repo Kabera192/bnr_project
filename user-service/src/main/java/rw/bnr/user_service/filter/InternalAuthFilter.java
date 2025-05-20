@@ -17,22 +17,24 @@ import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
-public class InternalAuthFilter extends OncePerRequestFilter
-{
+public class InternalAuthFilter extends OncePerRequestFilter {
     private final List<String> publicPaths = Arrays.asList(
             "/user/register",
-            "/user/login"
+            "/user/login",
+            "/swagger-ui/",
+            "/favicon.ico",
+            "/v3/api-docs",
+            "/swagger-resources",
+            "/webjars/"
     );
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException
-    {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         log.debug("InternalAuthFilter - doFilterInternal");
         String path = request.getRequestURI();
 
         // Allow public endpoints without authentication
-        if (isPublicPath(path))
-        {
+        if (isPublicPath(path)) {
             log.debug("InternalAuthFilter - path {} is public", path);
             filterChain.doFilter(request, response);
             return;
@@ -42,8 +44,7 @@ public class InternalAuthFilter extends OncePerRequestFilter
         String internalAuth = request.getHeader("X-Internal-Auth");
         log.info("InternalAuthFilter - internalAuth {}", internalAuth);
 
-        if ("true".equals(internalAuth))
-        {
+        if ("true".equals(internalAuth)) {
             log.info("InternalAuthFilter - internalAuth {} is true", internalAuth);
 
             Authentication auth = new UsernamePasswordAuthenticationToken(
@@ -65,8 +66,19 @@ public class InternalAuthFilter extends OncePerRequestFilter
         response.getWriter().write(error.toString());
     }
 
-    private boolean isPublicPath(String path)
-    {
-        return publicPaths.stream().anyMatch(path::endsWith);
+    private boolean isPublicPath(String path) {
+        // Check if the path starts with any of the public path prefixes
+        for (String prefix : publicPaths) {
+            if (path.startsWith(prefix)) {
+                log.debug("InternalAuthFilter - Path {} starts with public prefix {}", path, prefix);
+                return true;
+            }
+        }
+
+        // Additional checks for specific paths
+        boolean isSwaggerUI = path.equals("/swagger-ui.html");
+        log.debug("InternalAuthFilter - Is path {} Swagger UI HTML? {}", path, isSwaggerUI);
+
+        return isSwaggerUI;
     }
 }

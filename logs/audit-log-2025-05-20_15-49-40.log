@@ -1,0 +1,4 @@
+=== LOG ROTATION - 2025-05-20 15:49:40 ===
+{"service":"user","ip":"0:0:0:0:0:0:0:1","method":"GET","path":"/user/login","status":403,"userId":null,"timestamp":[2025,5,19,16,14,38,137427600]}
+{"service":"user","ip":"0:0:0:0:0:0:0:1","method":"POST","path":"/user/login","status":200,"userId":null,"timestamp":[2025,5,20,12,17,4,600788100]}
+{"service":"user","ip":"0:0:0:0:0:0:0:1","method":"GET","path":"/user/all","status":200,"userId":"kg@test.com","timestamp":[2025,5,20,12,17,59,637158300]}
